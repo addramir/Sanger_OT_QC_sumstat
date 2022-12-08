@@ -3,7 +3,7 @@ Quality control tests on summary statistics data
 
 Quality control step to do GWAS summary statistics databases such as GWAS-catalog, FINNGEN, etc..
 
-The first part consist in estimating the priors for each test. I have already calculated these for UK Biobanks and are reported below:
+The first part consist in estimating the priors for each test. I have already calculated these for UK Biobanks and are reported below. The others need to be calucated and scripts will soon be ready to do that
 
 #### AF-AF test:
 3rd_quartile_beta_prior = *****
