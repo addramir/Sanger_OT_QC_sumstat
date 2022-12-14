@@ -79,7 +79,7 @@ NEALE_studies_priors = (NEALE_studies
 
 prior_uk_bio_lr = NEALE_studies_priors.select("study_id","result_lin_reg.*")
 
-prior_uk_bio_bounds = calculate_bounds(prior_uk_bio_lr)
+prior_uk_bio_bounds = calculate_iqr(prior_uk_bio_lr)
 print(prior_uk_bio_bounds)
 
 #{'beta': {'q1': 0.9999961853027344, 'q3': 1.000001072883606, '3iqr': 1.4662742614746094e-05}, 'beta_stderr': {'q1': 1.3771888518476771e-08, 'q3': 5.1801254841166156e-08, '3iqr': 1.1408809896806815e-07}, 'intercept': {'q1': -8.286592674267013e-07, 'q3': 7.17984084985801e-06, '3iqr': 2.4025500351854134e-05}, 'intercept_stderr': {'q1': 7.51434381385252e-09, 'q3': 2.9397350331805683e-08, '3iqr': 6.564901955385949e-08}}
