@@ -77,7 +77,7 @@ NEALE_studies_priors = (NEALE_studies
             )
 
 
-prior_uk_bio_lr = NEALE_studies_priors.select("study_id","result_lin_reg.*")
+prior_uk_bio_lr = NEALE_studies_priors.select("result_lin_reg.*")
 
 prior_uk_bio_bounds = calculate_iqr(prior_uk_bio_lr)
 print(prior_uk_bio_bounds)
