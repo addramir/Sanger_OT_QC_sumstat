@@ -58,25 +58,28 @@ linear_reg_Schema = t.StructType([
 grp_window = Window.partitionBy('study_id')
 
 
-final_data_priors = (NEALE_studies
+NEALE_studies_priors = (NEALE_studies
               .withColumn("zscore", f.col("beta")/f.col("se"))
               .withColumn("new_pval", calculate_pval_udf(f.col("zscore")**2))
               .withColumn("var_af", 2*(f.col("eaf") * (1-f.col("eaf"))))
               .withColumn("pheno_var", ((f.col("se")**2) * (f.col("n_total") * f.col("var_af"))) + ((f.col("beta")**2) * f.col("var_af")))
               .withColumn("pheno_median", f.percentile_approx( "pheno_var", 0.5).over(grp_window))
-              .groupBy("study_id")
-              .agg(f.collect_list("pval").alias("pval_vector"),
-                   f.collect_list("new_pval").alias("new_pval_vector"),
-                   )
               .withColumn("N_hat",(f.col("pheno_median") - ((f.col("beta")**2) * f.col("var_af"))/((f.col("se")**2) * f.col("var_af"))))
+              .groupBy("study_id")
+              .agg(
+                   f.collect_list("pval").alias("pval_vector"),
+                   f.collect_list("new_pval").alias("new_pval_vector"),
+                   f.percentile_approx( f.col("N_hat")/f.col("n_total"), 0.5).alias("median_N"),
+                   f.stddev(f.col("N_hat")/f.col("n_total")).alias("se_N")
+                   )
               .withColumn("result_lin_reg", lin_udf(f.col("pval_vector"), f.col("new_pval_vector")))
-              
+
             )
 
 
-prior_uk_bio_lr = prior_uk_bio.select("study_id","result_lin_reg.*", "median_N", "se_N", )
+prior_uk_bio_lr = NEALE_studies_priors.select("study_id","result_lin_reg.*")
 
-#prior_uk_bio_bounds = calculate_bounds(prior_uk_bio_lr)
-#print(prior_uk_bio_bounds)
+prior_uk_bio_bounds = calculate_bounds(prior_uk_bio_lr)
+print(prior_uk_bio_bounds)
 
 #{'beta': {'q1': 0.9999961853027344, 'q3': 1.000001072883606, '3iqr': 1.4662742614746094e-05}, 'beta_stderr': {'q1': 1.3771888518476771e-08, 'q3': 5.1801254841166156e-08, '3iqr': 1.1408809896806815e-07}, 'intercept': {'q1': -8.286592674267013e-07, 'q3': 7.17984084985801e-06, '3iqr': 2.4025500351854134e-05}, 'intercept_stderr': {'q1': 7.51434381385252e-09, 'q3': 2.9397350331805683e-08, '3iqr': 6.564901955385949e-08}}
