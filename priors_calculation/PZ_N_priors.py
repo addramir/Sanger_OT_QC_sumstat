@@ -1,5 +1,4 @@
-# This script calculate the beta and se using the estimated and reported pvalues in uk biobank studies. 
-# These are used as priors to do QC on other GWAS studies
+# This script calculate the priors for QC GWAS data ingested 
 # Approx 2K UK Biobank studies are considered
 
 from pyspark.sql import SparkSession
