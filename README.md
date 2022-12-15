@@ -36,7 +36,6 @@ gcloud dataproc clusters create QC_gwas \
         --region= europe-west1-b \
 	--master-machine-type=n1-highmem-96 \
         --enable-component-gateway \
-        --initialization-actions=gs://genetics_etl_python_playground/initialisation/initialise_cluster.sh \
         --single-node \
         --max-idle=10m
 	
