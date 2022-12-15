@@ -18,6 +18,12 @@ def calculate_pval(z_score):
 
 calculate_pval_udf = f.udf(calculate_pval, t.DoubleType())
 
+linear_reg_Schema = t.StructType([
+    t.StructField("beta", t.FloatType(), False),
+    t.StructField("beta_stderr", t.FloatType(), False),
+    t.StructField("intercept", t.FloatType(), False),
+    t.StructField("intercept_stderr", t.FloatType(), False)])
+
 def calculate_lin_reg(y, x):
     lin_reg = sc.stats.linregress(y,x)
     return [float(lin_reg.slope), float(lin_reg.stderr), float(lin_reg.intercept), float(lin_reg.intercept_stderr)]
@@ -27,9 +33,9 @@ lin_udf = f.udf(calculate_lin_reg,  linear_reg_Schema)
 def calculate_iqr(spark_dataframe):
     bounds = {
         c: dict(
-            zip(["q1", "q3"], df.approxQuantile(c, [0.25, 0.75], 0))
+            zip(["q1", "q3"], spark_dataframe.approxQuantile(c, [0.25, 0.75], 0))
         )
-        for c in df.columns
+        for c in spark_dataframe.columns
     }
     for c in bounds:
         iqr = bounds[c]['q3'] - bounds[c]['q1']
@@ -39,25 +45,10 @@ def calculate_iqr(spark_dataframe):
  
 #main script
 
-path_ukbio = "gs://genetics-portal-dev-sumstats/filtered/significant_window_2mb/gwas/NEALE2_*"
+path_ukbio = "gs://genetics-portal-dev-sumstats/filtered/significant_window_2mb/gwas/NEALE2_100001_raw.parquet"
 NEALE_studies = spark.read.parquet(path_ukbio)
 
-NEALE_studies = (
-    NEALE_studies
-        .withColumn("zscore", f.col("beta")/f.col("se"))
-        .withColumn("new_pval", calculate_pval_udf(f.col("zscore")**2))
-        .select("study_id","pval", "new_pval")
-            )
-
-linear_reg_Schema = t.StructType([
-    t.StructField("beta", t.FloatType(), False),
-    t.StructField("beta_stderr", t.FloatType(), False),
-    t.StructField("intercept", t.FloatType(), False),
-    t.StructField("intercept_stderr", t.FloatType(), False)])
-
-
 grp_window = Window.partitionBy('study_id')
-
 
 NEALE_studies_priors = (NEALE_studies
               .withColumn("zscore", f.col("beta")/f.col("se"))
