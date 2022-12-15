@@ -26,8 +26,6 @@ The first part consist in estimating the priors for each test. I have already ca
 3rd_quartile_intercept_se_prior = *****
 
 
-This test was run using a VM with 16 cores.
-
 To make another test run:
 
 gcloud dataproc clusters create QC_gwas \
