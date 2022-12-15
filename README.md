@@ -30,13 +30,16 @@ This test was run using a VM with 16 cores.
 
 To make another test run:
 
-gcloud dataproc clusters create ${CLUSTER_NAME} \
+gcloud dataproc clusters create QC_gwas \
         --image-version=2.0 \
         --project=open-targets-genetics-dev \
-        --region=${REGION} \
-		--master-machine-type=n1-highmem-96 \
+        --region= europe-west1-b \
+	--master-machine-type=n1-highmem-96 \
         --enable-component-gateway \
         --initialization-actions=gs://genetics_etl_python_playground/initialisation/initialise_cluster.sh \
         --single-node \
         --max-idle=10m
+	
+	
+gcloud dataproc jobs submit pyspark --cluster=QC_gwas --project=open-targets-genetics-dev --region=europe-west1-b PZ_N_priors.py
 
