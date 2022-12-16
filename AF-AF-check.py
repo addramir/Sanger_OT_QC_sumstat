@@ -29,4 +29,4 @@ gwas_cat_data_nfe = (gwas_cat_data_nfe.withColumn("delta_freq", f.abs(f.col("nfe
                     .filter(f.col("prop_delta")>0.2)
                     )
 
-gwas_cat_data_nfe.write.parquet("/home/ba13/QC_sumstat/no_qc_sumstat)
+gwas_cat_data_nfe.write.parquet("/home/ba13/QC_sumstat/no_qc_sumstat")
