@@ -1,6 +1,3 @@
-# This script calculate the priors for QC GWAS data ingested 
-# Approx 2K UK Biobank studies are considered
-
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as f
 import pyspark.sql.types as t
@@ -22,11 +19,20 @@ variant_annotation = (spark.read.parquet("gs://genetics_etl_python_playground/XX
                         .filter(~f.col("nfe_freq").isNull())
                         )
 
+
+grp_window = Window.partitionBy('study_id')
+
+
 gwas_cat_data_nfe = gwas_cat_data.join(variant_annotation, on = "id", how = "inner")
-gwas_cat_data_nfe = (gwas_cat_data_nfe.withColumn("delta_freq", f.abs(f.col("nfe_freq") - f.col("eaf")))
-                    .groupBy("study_id")
-                    .agg((f.sum("delta_freq")/f.count("id")).alias("prop_delta"))
-                    .filter(f.col("prop_delta")>0.2)
+gwas_cat_data_nfe = (gwas_cat_data_nfe
+                    .withColumn("delta_freq", f.abs(f.col("nfe_freq") - f.col("eaf")))
+                    .withColumn("total_SNP", f.count("id").over(grp_window))
+                    .filter(f.col("delta_freq")> 0.2)
+                    .withColumn("over_threshold", f.count("id").over(grp_window))
+                    .withColumn("delta_prop", f.col("over_threshold")/f.col("total_SNP"))
+                    .select("study_id", "delta_prop", "total_SNP", "over_threshold")
+                    .distinct()
+                    .filter(f.col("delta_prop") > 0.2)
                     )
 
-gwas_cat_data_nfe.write.parquet("/home/ba13/QC_sumstat/no_qc_sumstat")
+gwas_cat_data_nfe.write.parquet("/home/ba13/AF-AF_filter")
