@@ -60,13 +60,18 @@ NEALE_studies = spark.read.parquet(path_ukbio)
 grp_window = Window.partitionBy('study_id')
 
 NEALE_studies_columns = (NEALE_studies
+    .withColumn("id", f.concat_ws("_", f.col("chrom"), f.col("pos"), f.col("ref"), f.col("alt")))
     .withColumn("zscore", f.col("beta")/f.col("se"))
     .withColumn("new_logpval", calculate_logpval_udf(f.col("zscore")**2))
     .withColumn("logpval",logpval_udf(f.col("pval")))
     .withColumn("var_af", 2*(f.col("eaf") * (1-f.col("eaf"))))
-    .withColumn("pheno_var", ((f.col("se")**2) * (f.col("n_total") * f.col("var_af"))) + ((f.col("beta")**2) * f.col("var_af"))))
+    .withColumn("pheno_var", ((f.col("se")**2) * (f.col("n_total") * f.col("var_af"))) + ((f.col("beta")**2) * f.col("var_af")))
+    .withColumn("total_SNP", f.count("id").over(grp_window))
+    )
 
-PHENO_MEDIAN=float(NEALE_studies_columns.agg(f.percentile_approx( "pheno_var", 0.5)).toPandas().iloc[0,0])
+PHENO_MEDIAN=float(NEALE_studies_columns.agg(f.percentile_approx("pheno_var",0.5)).toPandas().iloc[0,0])
+total_SNP=int(NEALE_studies_columns.agg(f.percentile_approx("total_SNP",0.5)).toPandas().iloc[0,0])
+n_total=int(NEALE_studies_columns.agg(f.percentile_approx("n_total",0.5)).toPandas().iloc[0,0])
 
 NEALE_studies_columns = (NEALE_studies_columns  
     .withColumn("N_hat",(PHENO_MEDIAN - ((f.col("beta")**2) * f.col("var_af"))/((f.col("se")**2) * f.col("var_af")))))
@@ -101,6 +106,14 @@ NEALE_studies_nfe = (NEALE_studies_nfe
                     .select("study_id", "delta_prop", "total_SNP", "over_threshold")
                     .distinct()
                     )
+
+NEALE_studies_nfe = (NEALE_studies_nfe
+                    .withColumn("total_SNP", f.count("id").over(grp_window)))
+
+
+
+
+
 
 NEALE_studies_beta = float(NEALE_studies_columns.select(f.mean("beta")).toPandas().iloc[0,0])
 
