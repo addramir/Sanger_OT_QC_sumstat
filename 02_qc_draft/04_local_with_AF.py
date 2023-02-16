@@ -8,6 +8,10 @@ import numpy as np
 
 gwas_list=!ls /mnt/disks/gwas/raw_20230120
 
+exist_list=!ls /mnt/disks/gwas/SS_QC/
+
+ll=set(gwas_list)-set(exist_list)
+
 #Spark initialization and configuration
 
 global spark
@@ -62,9 +66,9 @@ variant_annotation = spark.read.parquet("/mnt/disks/gwas/variant_annotation_gnom
  
 #main script
 
-gw=gwas_list[0]
+gw=ll[0]
 i=0
-for i,gw in enumerate(gwas_list):
+for i,gw in enumerate(ll):
 	print("N "+str(i)+": "+gw)
 	GWAS=spark.read.parquet("/mnt/disks/gwas/raw_20230120/"+gw)
 	grp_window = Window.partitionBy('study_id')
