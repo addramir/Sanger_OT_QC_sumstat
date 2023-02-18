@@ -13,7 +13,7 @@ global spark
 spark = (
     SparkSession.builder
     .master('local[*]')
-    .config('spark.driver.memory', '115g')
+    .config('spark.driver.memory', '92g')
     .appName('spark')
     .getOrCreate()
 )
@@ -115,11 +115,3 @@ for i,gw in enumerate(ll):
                     )
 	GWAS_columns=GWAS_columns.join(GWAS_nfe)
 	GWAS_columns.write.parquet("/mnt/disks/gwas/SS_QC/"+gw)
-
-
-
-
-				.filter(f.col("pval")>0)
-				.filter(f.col("pval")<1)
-				.filter(f.col("eaf")>0)
-				.filter(f.col("eaf")<1)
