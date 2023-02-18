@@ -6,11 +6,6 @@ import scipy as sc
 from scipy import stats
 import numpy as np
 
-gwas_list=!ls /mnt/disks/gwas/raw_20230120
-
-exist_list=!ls /mnt/disks/gwas/SS_QC/
-
-ll=set(gwas_list)-set(exist_list)
 
 #Spark initialization and configuration
 
@@ -18,7 +13,7 @@ global spark
 spark = (
     SparkSession.builder
     .master('local[*]')
-    .config('spark.driver.memory', '110g')
+    .config('spark.driver.memory', '115g')
     .appName('spark')
     .getOrCreate()
 )
@@ -66,14 +61,21 @@ variant_annotation = spark.read.parquet("/mnt/disks/gwas/variant_annotation_gnom
  
 #main script
 
-gw=ll[0]
-i=0
+gwas_list=!ls /mnt/disks/gwas/raw_20230120
+exist_list=!ls /mnt/disks/gwas/SS_QC/
+ll=set(gwas_list)-set(exist_list)
+
+#gw=ll[0]
+#i=0
 for i,gw in enumerate(ll):
 	print("N "+str(i)+": "+gw)
 	GWAS=spark.read.parquet("/mnt/disks/gwas/raw_20230120/"+gw)
 	grp_window = Window.partitionBy('study_id')
 	GWAS_columns = (GWAS
+		.filter(f.col("beta")!=0)
+		.filter(f.col("se")>0)
 		.withColumn("zscore", f.col("beta")/f.col("se"))
+		.filter((f.col("zscore")**2)<=500)
 		.withColumn("new_logpval", calculate_logpval_udf(f.col("zscore")**2))
 		.withColumn("logpval",logpval_udf(f.col("pval")))
 		.withColumn("var_af", 2*(f.col("eaf") * (1-f.col("eaf"))))
@@ -94,6 +96,10 @@ for i,gw in enumerate(ll):
 		.select('study_id','median_N','se_N','N','total_SNP','mean_beta','result_lin_reg')
 	)
 	GWAS_eaf = (GWAS
+				.filter(f.col("beta")!=0)
+				.filter(f.col("se")>0)
+				.withColumn("zscore", f.col("beta")/f.col("se"))
+				.filter((f.col("zscore")**2)<=500)
                 .withColumn("id", f.concat_ws("_", f.col("chrom"), f.col("pos"), f.col("ref"), f.col("alt")))
                 .select("study_id", "type", "id", "beta", "eaf")
                 )
@@ -113,3 +119,7 @@ for i,gw in enumerate(ll):
 
 
 
+				.filter(f.col("pval")>0)
+				.filter(f.col("pval")<1)
+				.filter(f.col("eaf")>0)
+				.filter(f.col("eaf")<1)
