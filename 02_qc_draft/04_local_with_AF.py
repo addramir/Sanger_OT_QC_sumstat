@@ -13,7 +13,7 @@ global spark
 spark = (
     SparkSession.builder
     .master('local[*]')
-    .config('spark.driver.memory', '92g')
+    .config('spark.driver.memory', '250g')
     .appName('spark')
     .getOrCreate()
 )
