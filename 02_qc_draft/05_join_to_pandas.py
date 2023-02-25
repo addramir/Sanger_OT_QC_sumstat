@@ -13,9 +13,9 @@ global spark
 spark = (
     SparkSession.builder
     .master('local[*]')
-    .config('spark.driver.memory', '5g')
-    .config("spark.driver.cores", "1")
-    .config("spark.executor.cores", "1") 
+    .config('spark.driver.memory', '50g')
+    .config("spark.driver.cores", "30")
+    .config("spark.executor.cores", "30") 
     .appName('spark')
     .getOrCreate()
 )
@@ -33,6 +33,17 @@ for i,gw in enumerate(gwas_list[1:]):
     GWAS=spark.read.parquet("/mnt/disks/gwas/SS_QC/"+gw)
     GWAS=GWAS.toPandas()
     out=pd.concat([out,GWAS])
+
+#L=(set(gwas_list)-set(out["study_id"].values+".parquet"))
+#pd.DataFrame(L).to_csv("/mnt/disks/gwas/remained_QC.txt",index=False,sep=";",header=False)
+
+#gwas_list=$(cat /mnt/disks/gwas/remained_QC.txt)
+#for gw in $gwas_list
+#do
+#    rm -rf $gw
+#done
+
+
 
 out["beta_PZ"]=[con[0] for con in (out.iloc[:,6])]
 out["se_beta_PZ"]=[con[1] for con in (out.iloc[:,6])]
