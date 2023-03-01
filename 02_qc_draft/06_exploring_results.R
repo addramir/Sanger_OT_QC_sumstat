@@ -57,14 +57,25 @@ L=c(L,x[ind,1])
 #####
 i=11
 print(colnames(x)[i])
-ind=x[,i]>(0.1) | x[,i]<(-0.1)
+ind=x[,i]>(0.05) | x[,i]<(-0.05)
 table(ind)
 L=c(L,x[ind,1])
 ######
 length(unique(L))
 
+write.table(x=unique(L),file="filtered_study_ids.txt",col.names=F,row.names=F,quote=F,sep="\t")
 
 table(grepl("GCST",x[,1]))
 table(grepl("FINNGEN",x[,1]))
 table(grepl("NEALE",x[,1]))
 table(grepl("SAIGE",x[,1]))
+
+
+i=9
+print(colnames(x)[i])
+ind=(abs(x[,i]-1)<0.05 & abs(x[,i]-1)>0.01)
+table(ind)
+l=x[ind,1]
+L=unique(L)
+l=l[!l%in%L]
+write.table(x=l,file="pvalues_from_b_se_study_ids.txt",col.names=F,row.names=F,quote=F,sep="\t")
